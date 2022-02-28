@@ -1,0 +1,6 @@
+name: MilkyWGFlags
+version: '${project.version}'
+main: fun.milkyway.milkywgflags.MilkyWGFlags
+api-version: 1.18
+depend:
+  - WorldGuard
