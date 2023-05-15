@@ -19,6 +19,7 @@ public final class MilkyWGFlags extends JavaPlugin {
         }
 
         getServer().getPluginManager().registerEvents(new BlockDropFlagListener(), this);
+        getServer().getPluginManager().registerEvents(new ItemFrameDestroyFixListener(), this);
     }
 
     @Override
