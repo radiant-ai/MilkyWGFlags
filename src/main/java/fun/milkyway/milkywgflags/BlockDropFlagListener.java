@@ -21,7 +21,8 @@ public class BlockDropFlagListener implements Listener {
         RegionContainer regionContainer = MilkyWGFlags.getInstance().getWorldGuard().getPlatform().getRegionContainer();
         Location location = BukkitAdapter.adapt(event.getBlock().getLocation());
         LocalPlayer player = WorldGuardPlugin.inst().wrapPlayer(event.getPlayer());
-        StateFlag blockBreakFlag = (StateFlag) MilkyWGFlags.getInstance().getWorldGuard().getFlagRegistry().get("block-drop");
+        StateFlag blockBreakFlag = MilkyWGFlags.BLOCK_DROP_FLAG;
+
         if (blockBreakFlag == null) {
             return;
         }
