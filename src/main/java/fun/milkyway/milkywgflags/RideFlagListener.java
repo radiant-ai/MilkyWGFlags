@@ -71,7 +71,7 @@ public class RideFlagListener implements Listener {
             return;
         }
 
-        if (!canRide(player, event.getTo()) && !player.hasPermission("milkyworldguard.ride.bypass")) {
+        if (!canRide(player, event.getTo())) {
             player.sendMessage(MiniMessage.miniMessage().deserialize("<gold>Вы не можете телепортироваться со своим транспортом: в точке прибытия отключен флаг ride."));
             return;
         }
@@ -84,7 +84,15 @@ public class RideFlagListener implements Listener {
     }
 
     private boolean canRide(Player player, Location location) {
+        var wrappedPlayer = WorldGuardPlugin.inst().wrapPlayer(player);
+        var wrappedWorld = BukkitAdapter.adapt(location.getWorld());
+
+        if (MilkyWGFlags.getInstance().getWorldGuard().getPlatform().getSessionManager().hasBypass(wrappedPlayer, wrappedWorld)) {
+            return true;
+        }
+
         var regionContainer = MilkyWGFlags.getInstance().getWorldGuard().getPlatform().getRegionContainer();
+
         var aLocation = BukkitAdapter.adapt(location);
         return regionContainer.createQuery().testBuild(aLocation, WorldGuardPlugin.inst().wrapPlayer(player), Flags.RIDE);
     }
