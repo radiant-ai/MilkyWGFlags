@@ -15,6 +15,7 @@ public final class MilkyWGFlags extends JavaPlugin {
 
     public static StateFlag BLOCK_DROP_FLAG = new StateFlag("block-drop", true);
     public static BooleanFlag CAPTURE_THE_FLAG = new BooleanFlag("capture-the-flag");
+    public static BooleanFlag KEEP_INVENTORY = null;
 
     @Override
     public void onEnable() {
@@ -56,6 +57,11 @@ public final class MilkyWGFlags extends JavaPlugin {
             if (!(flagRegistry.get("capture-the-flag") instanceof StateFlag)) {
                 getLogger().severe("Flag capture-the-flag already existed while tried to register and it had a wrong type!");
             }
+        }
+        var keepInventoryFlag = flagRegistry.get("keep-inventory");
+        if (keepInventoryFlag instanceof BooleanFlag booleanFlag) {
+            KEEP_INVENTORY = booleanFlag;
+            getLogger().severe("Failed to get keep-inventory flag!");
         }
     }
 

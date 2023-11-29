@@ -22,23 +22,28 @@ public class CaptureTheFlagFlagListener implements Listener {
             return;
         }
 
-        var regionContainer = MilkyWGFlags.getInstance().getWorldGuard().getPlatform().getRegionContainer();
-        var location = BukkitAdapter.adapt(event.getPlayer().getLocation());
-
-        var captureTheFlagFlag = MilkyWGFlags.CAPTURE_THE_FLAG;
-
-        if (captureTheFlagFlag == null) {
+        if (event.getKeepInventory()) {
             return;
         }
 
-        var state = regionContainer.createQuery().queryValue(location, null, captureTheFlagFlag);
+        var regionContainer = MilkyWGFlags.getInstance().getWorldGuard().getPlatform().getRegionContainer();
+        var location = BukkitAdapter.adapt(event.getPlayer().getLocation());
+
+        if (MilkyWGFlags.CAPTURE_THE_FLAG == null) {
+            return;
+        }
+
+        var state = regionContainer.createQuery().queryValue(location, null, MilkyWGFlags.CAPTURE_THE_FLAG);
 
         if (state == null || !state) {
             return;
         }
 
-        if (event.getKeepInventory()) {
-            return;
+        if (MilkyWGFlags.KEEP_INVENTORY != null) {
+            var keepInventory = regionContainer.createQuery().queryValue(location, null, MilkyWGFlags.KEEP_INVENTORY);
+            if (Boolean.TRUE.equals(keepInventory)) {
+                return;
+            }
         }
 
         var removeIterator = event.getDrops().iterator();
