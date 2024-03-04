@@ -3,4 +3,6 @@ version: '${project.version}'
 main: fun.milkyway.milkywgflags.MilkyWGFlags
 api-version: 1.18
 softdepend:
+  - TAB
+depend:
   - WorldGuard

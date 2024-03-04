@@ -32,7 +32,7 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.3.1</version>
                 <configuration>
-                    <outputDirectory>D:/minecraft_dev/milky-way-copy/plugins</outputDirectory>
+                    <outputDirectory>D:/minecraft_dev/milky-copy/plugins</outputDirectory>
                 </configuration>
             </plugin>
             <plugin>
@@ -79,6 +79,10 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>krypton</id>
+            <url>https://repo.kryptonmc.org/releases</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -92,6 +96,12 @@
             <groupId>com.sk89q.worldguard</groupId>
             <artifactId>worldguard-bukkit</artifactId>
             <version>7.0.6</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>me.neznamy</groupId>
+            <artifactId>tab-api</artifactId>
+            <version>4.0.2</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

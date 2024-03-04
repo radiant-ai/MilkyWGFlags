@@ -5,6 +5,7 @@ import com.sk89q.worldguard.protection.flags.BooleanFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,19 +15,23 @@ public final class MilkyWGFlags extends JavaPlugin {
     private WorldGuard worldGuard;
 
     public static StateFlag BLOCK_DROP_FLAG = new StateFlag("block-drop", true);
+    public static StateFlag SHOW_NAMES_FLAG = new StateFlag("show-names", true);
     public static BooleanFlag CAPTURE_THE_FLAG = new BooleanFlag("capture-the-flag");
     public static BooleanFlag KEEP_INVENTORY = null;
 
     @Override
     public void onEnable() {
         if (worldGuard == null) {
-            setEnabled(false);
+            getLogger().severe("WorldGuard not found! Disabling MilkyWGFlags...");
+            return;
         }
+
+        registerHandlers();
 
         getServer().getPluginManager().registerEvents(new BlockDropFlagListener(), this);
         getServer().getPluginManager().registerEvents(new CaptureTheFlagFlagListener(), this);
         getServer().getPluginManager().registerEvents(new ItemFrameDestroyFixListener(), this);
-        getServer().getPluginManager().registerEvents(new WorldGuardMobSpawnListener(), this);
+        //getServer().getPluginManager().registerEvents(new WorldGuardMobSpawnListener(), this);
         getServer().getPluginManager().registerEvents(new RideFlagListener(), this);
     }
 
@@ -52,6 +57,13 @@ public final class MilkyWGFlags extends JavaPlugin {
             }
         }
         try {
+            flagRegistry.register(SHOW_NAMES_FLAG);
+        } catch (FlagConflictException e) {
+            if (!(flagRegistry.get("hide-names") instanceof StateFlag)) {
+                getLogger().severe("Flag hide-names already existed while tried to register and it had a wrong type!");
+            }
+        }
+        try {
             flagRegistry.register(CAPTURE_THE_FLAG);
         } catch (FlagConflictException e) {
             if (!(flagRegistry.get("capture-the-flag") instanceof StateFlag)) {
@@ -61,8 +73,20 @@ public final class MilkyWGFlags extends JavaPlugin {
         var keepInventoryFlag = flagRegistry.get("keep-inventory");
         if (keepInventoryFlag instanceof BooleanFlag booleanFlag) {
             KEEP_INVENTORY = booleanFlag;
+        }
+        else {
             getLogger().severe("Failed to get keep-inventory flag!");
         }
+    }
+
+    public void registerHandlers() {
+        var sessionManager = worldGuard.getPlatform().getSessionManager();
+
+        if (Bukkit.getPluginManager().getPlugin("TAB") == null) {
+            getLogger().severe("TAB not found! Skipping ShowNamesHandler registration...");
+            return;
+        }
+        sessionManager.registerHandler(ShowNamesHandler.FACTORY, null);
     }
 
     public static @NotNull MilkyWGFlags getInstance() {

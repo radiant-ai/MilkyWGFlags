@@ -29,7 +29,7 @@ public class WorldGuardMobSpawnListener implements Listener {
         event.setCancelled(true);
     }
 
-    /*@EventHandler(ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true)
     public void onSpawnChunkMap(PlayerNaturallySpawnCreaturesEvent event) {
         var value = shouldCalculateSpawns(event.getPlayer(), event.getSpawnRadius() * 16 - 4);
 
@@ -38,7 +38,7 @@ public class WorldGuardMobSpawnListener implements Listener {
         }
 
         event.setCancelled(true);
-    }*/
+    }
 
     private boolean shouldCalculateSpawns(Player player, int spawnRadius) {
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
