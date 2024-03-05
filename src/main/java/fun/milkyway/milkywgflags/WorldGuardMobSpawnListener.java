@@ -37,7 +37,7 @@ public class WorldGuardMobSpawnListener implements Listener {
             return;
         }
 
-        event.setCancelled(true);
+        event.setSpawnRadius((byte) 0);
     }
 
     private boolean shouldCalculateSpawns(Player player, int spawnRadius) {
