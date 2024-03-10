@@ -42,6 +42,21 @@ public class RideFlagListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGH)
+    public void onMount(PlayerInteractEntityEvent event) {
+        if (!isRidable(event.getRightClicked())) {
+            return;
+        }
+        if (canRide(event.getPlayer(), event.getRightClicked().getLocation())) {
+            return;
+        }
+        if (event.getRightClicked().getPersistentDataContainer().getOrDefault(vehicleOwnerKey, PersistentDataType.STRING, "")
+                .equals(event.getPlayer().getUniqueId().toString())) {
+            return;
+        }
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
     public void onVehicleExit(VehicleExitEvent event) {
         if (!(event.getExited() instanceof Player player)) {
             return;
