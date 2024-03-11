@@ -3,7 +3,6 @@ package fun.milkyway.milkywgflags;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.flags.Flags;
-import com.sk89q.worldguard.protection.flags.StateFlag;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
@@ -17,6 +16,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.vehicle.VehicleEnterEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.persistence.PersistentDataType;
 
@@ -42,15 +42,18 @@ public class RideFlagListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGH)
-    public void onMount(PlayerInteractEntityEvent event) {
-        if (!isRidable(event.getRightClicked())) {
+    public void onMount(VehicleEnterEvent event) {
+        if (!(event.getEntered() instanceof Player player)) {
             return;
         }
-        if (canRide(event.getPlayer(), event.getRightClicked().getLocation())) {
+        if (!isRidable(event.getVehicle())) {
             return;
         }
-        if (event.getRightClicked().getPersistentDataContainer().getOrDefault(vehicleOwnerKey, PersistentDataType.STRING, "")
-                .equals(event.getPlayer().getUniqueId().toString())) {
+        if (canRide(player, event.getVehicle().getLocation())) {
+            return;
+        }
+        if (event.getVehicle().getPersistentDataContainer().getOrDefault(vehicleOwnerKey, PersistentDataType.STRING, "")
+                .equals(player.getUniqueId().toString())) {
             return;
         }
         event.setCancelled(true);
