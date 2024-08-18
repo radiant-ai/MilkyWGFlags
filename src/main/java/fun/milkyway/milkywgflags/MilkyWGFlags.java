@@ -17,6 +17,7 @@ public final class MilkyWGFlags extends JavaPlugin {
     public static StateFlag BLOCK_DROP_FLAG = new StateFlag("block-drop", true);
     public static StateFlag SHOW_NAMES_FLAG = new StateFlag("show-names", true);
     public static BooleanFlag CAPTURE_THE_FLAG = new BooleanFlag("capture-the-flag");
+    public static NoDurabilityFlag NO_DURABILITY = new NoDurabilityFlag("no-durability");
     public static BooleanFlag KEEP_INVENTORY = null;
 
     @Override
@@ -33,6 +34,7 @@ public final class MilkyWGFlags extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ItemFrameDestroyFixListener(), this);
         getServer().getPluginManager().registerEvents(new WorldGuardMobSpawnListener(), this);
         getServer().getPluginManager().registerEvents(new RideFlagListener(), this);
+        getServer().getPluginManager().registerEvents(new ItemDurabilityListener(), this);
     }
 
     @Override
@@ -68,6 +70,14 @@ public final class MilkyWGFlags extends JavaPlugin {
         } catch (FlagConflictException e) {
             if (!(flagRegistry.get("capture-the-flag") instanceof StateFlag)) {
                 getLogger().severe("Flag capture-the-flag already existed while tried to register and it had a wrong type!");
+            }
+        }
+        try {
+            flagRegistry.register(NO_DURABILITY);
+        }
+        catch (FlagConflictException e) {
+            if (!(flagRegistry.get("no-durability") instanceof NoDurabilityFlag)) {
+                getLogger().severe("Flag no-durability already existed while tried to register and it had a wrong type!");
             }
         }
         var keepInventoryFlag = flagRegistry.get("keep-inventory");
