@@ -19,6 +19,7 @@ public final class MilkyWGFlags extends JavaPlugin {
     public static BooleanFlag CAPTURE_THE_FLAG = new BooleanFlag("capture-the-flag");
     public static NoDurabilityFlag NO_DURABILITY = new NoDurabilityFlag("no-durability");
     public static BooleanFlag KEEP_INVENTORY = null;
+    public static StateFlag AMBIENT_EFFECT = new StateFlag("ambient-effect", true);
 
     @Override
     public void onEnable() {
@@ -80,6 +81,13 @@ public final class MilkyWGFlags extends JavaPlugin {
                 getLogger().severe("Flag no-durability already existed while tried to register and it had a wrong type!");
             }
         }
+        try {
+            flagRegistry.register(AMBIENT_EFFECT);
+        } catch (FlagConflictException e) {
+            if (!(flagRegistry.get("ambient-effect") instanceof StateFlag)) {
+                getLogger().severe("Flag ambient-effect already existed while tried to register and it had a wrong type!");
+            }
+        }
         var keepInventoryFlag = flagRegistry.get("keep-inventory");
         if (keepInventoryFlag instanceof BooleanFlag booleanFlag) {
             KEEP_INVENTORY = booleanFlag;
@@ -97,6 +105,7 @@ public final class MilkyWGFlags extends JavaPlugin {
             return;
         }
         sessionManager.registerHandler(ShowNamesHandler.FACTORY, null);
+        sessionManager.registerHandler(AmbientEffectHandler.FACTORY, null);
     }
 
     public static @NotNull MilkyWGFlags getInstance() {
