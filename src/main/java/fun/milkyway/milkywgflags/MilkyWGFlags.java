@@ -36,6 +36,7 @@ public final class MilkyWGFlags extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new WorldGuardMobSpawnListener(), this);
         getServer().getPluginManager().registerEvents(new RideFlagListener(), this);
         getServer().getPluginManager().registerEvents(new ItemDurabilityListener(), this);
+        getServer().getPluginManager().registerEvents(new CopperGolemProtectionListener(), this);
     }
 
     @Override

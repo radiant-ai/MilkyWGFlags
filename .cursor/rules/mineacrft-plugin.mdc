@@ -1,0 +1,8 @@
+---
+alwaysApply: true
+---
+This is a plugin to enhance existing WorldGuard (https://github.com/EngineHub/WorldGuard) functionality for Minecraft targetting paper-api 1.21.10 (JavaDoc https://jd.papermc.io/paper/1.21.10/).
+
+The goal of this plugin is to add additional flags and apply some fixes to the WorldGuard protection system.
+
+Be eager to check JavaDocs for classes and interfaces of entities that you work with when you write new code to avoid outdated and deprecated methods, you can use browser to browse docs or code.
