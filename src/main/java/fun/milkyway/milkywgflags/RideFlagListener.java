@@ -6,57 +6,66 @@ import com.sk89q.worldguard.protection.flags.Flags;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
-import org.bukkit.entity.AbstractHorse;
-import org.bukkit.entity.Boat;
-import org.bukkit.entity.Entity;
+import org.bukkit.entity.HappyGhast;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.minecart.RideableMinecart;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityMountEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.event.vehicle.VehicleEnterEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public class RideFlagListener implements Listener {
-    private static final NamespacedKey vehicleOwnerKey = new NamespacedKey(MilkyWGFlags.getInstance(), "vehicleOwner");
+    private static final NamespacedKey vehicleOwnersKey = new NamespacedKey(MilkyWGFlags.getInstance(), "vehicleOwners");
 
     @EventHandler(priority = EventPriority.HIGH)
-    public void onRightClickHorse(PlayerInteractEntityEvent event) {
+    public void onMount(EntityMountEvent event) {
         if (!event.isCancelled()) {
             return;
         }
-        if (!isRidable(event.getRightClicked())) {
+        if (!(event.getEntity() instanceof Player player)) {
             return;
         }
-        if (canRide(event.getPlayer(), event.getRightClicked().getLocation())) {
+        if (canRide(player, event.getEntity().getLocation())) {
             return;
         }
-        if (!event.getRightClicked().getPersistentDataContainer().getOrDefault(vehicleOwnerKey, PersistentDataType.STRING, "")
-                .equals(event.getPlayer().getUniqueId().toString())) {
+        
+        var vehicle = event.getMount();
+        var currentPassengers = vehicle.getPassengers();
+        var owners = getVehicleOwners(vehicle);
+        var playerUuid = player.getUniqueId().toString();
+        
+        if (currentPassengers.isEmpty()) {
+            if (!owners.isEmpty() && !owners.contains(playerUuid)) {
+                setVehicleOwners(vehicle, Set.of(playerUuid));
+                event.setCancelled(false);
+                return;
+            }
+            if (owners.contains(playerUuid)) {
+                event.setCancelled(false);
+                return;
+            }
             return;
         }
-        event.setCancelled(false);
-    }
-
-    @EventHandler(priority = EventPriority.HIGH)
-    public void onMount(VehicleEnterEvent event) {
-        if (!(event.getEntered() instanceof Player player)) {
-            return;
+        
+        var updatedOwners = new HashSet<>(owners);
+        updatedOwners.add(playerUuid);
+        currentPassengers.stream()
+            .filter(p -> p instanceof Player)
+            .map(p -> ((Player) p).getUniqueId().toString())
+            .forEach(updatedOwners::add);
+        setVehicleOwners(vehicle, updatedOwners);
+        
+        if (updatedOwners.contains(playerUuid)) {
+            event.setCancelled(false);
         }
-        if (!isRidable(event.getVehicle())) {
-            return;
-        }
-        if (canRide(player, event.getVehicle().getLocation())) {
-            return;
-        }
-        if (event.getVehicle().getPersistentDataContainer().getOrDefault(vehicleOwnerKey, PersistentDataType.STRING, "")
-                .equals(player.getUniqueId().toString())) {
-            return;
-        }
-        event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -64,11 +73,17 @@ public class RideFlagListener implements Listener {
         if (!(event.getExited() instanceof Player player)) {
             return;
         }
-        if (event.getVehicle().getPassengers().size() > 1) {
-            return;
-        }
-        event.getVehicle().getPersistentDataContainer().set(vehicleOwnerKey, PersistentDataType.STRING, player.getUniqueId().toString());
-        if (!event.isCancelled() && canRide(player, event.getVehicle().getLocation())) {
+        
+        var vehicle = event.getVehicle();
+        var remainingPassengers = vehicle.getPassengers().stream()
+            .filter(p -> p != player && p instanceof Player)
+            .map(p -> ((Player) p).getUniqueId().toString())
+            .collect(Collectors.toSet());
+        remainingPassengers.add(player.getUniqueId().toString());
+        
+        setVehicleOwners(vehicle, remainingPassengers);
+        
+        if (!event.isCancelled() && canRide(player, vehicle.getLocation())) {
             return;
         }
         player.sendMessage(MiniMessage.miniMessage().deserialize("<gold>Вы покинули свой транспорт в привате с отключенным флагом ride. Только вы сможете сесть обратно!"));
@@ -89,6 +104,8 @@ public class RideFlagListener implements Listener {
             return;
         }
 
+        event.setCancelled(true);
+
         if (!canRide(player, event.getTo())) {
             player.sendMessage(MiniMessage.miniMessage().deserialize("<gold>Вы не можете телепортироваться со своим транспортом: в точке прибытия отключен флаг ride."));
             return;
@@ -99,6 +116,18 @@ public class RideFlagListener implements Listener {
                 vehicle.addPassenger(player);
             });
         }, 1);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onVehicleSpawn(CreatureSpawnEvent event) {
+        if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.MOUNT) {
+            return;
+        }
+        if (!(event.getEntity() instanceof HappyGhast)) {
+            return;
+        }
+        event.setCancelled(false);
+        MilkyWGFlags.getInstance().getLogger().info("Uncancelled HappyGhast spawn");
     }
 
     private boolean canRide(Player player, Location location) {
@@ -114,8 +143,19 @@ public class RideFlagListener implements Listener {
         var aLocation = BukkitAdapter.adapt(location);
         return regionContainer.createQuery().testBuild(aLocation, WorldGuardPlugin.inst().wrapPlayer(player), Flags.RIDE);
     }
-
-    private boolean isRidable(Entity entity) {
-        return entity instanceof AbstractHorse || entity instanceof RideableMinecart || entity instanceof Boat;
+    
+    private Set<String> getVehicleOwners(org.bukkit.entity.Entity vehicle) {
+        var ownersString = vehicle.getPersistentDataContainer().getOrDefault(vehicleOwnersKey, PersistentDataType.STRING, "");
+        if (ownersString.isEmpty()) {
+            return new HashSet<>();
+        }
+        return Arrays.stream(ownersString.split(","))
+            .filter(s -> !s.isEmpty())
+            .collect(Collectors.toSet());
+    }
+    
+    private void setVehicleOwners(org.bukkit.entity.Entity vehicle, Set<String> owners) {
+        var ownersString = String.join(",", owners);
+        vehicle.getPersistentDataContainer().set(vehicleOwnersKey, PersistentDataType.STRING, ownersString);
     }
 }
