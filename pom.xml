@@ -79,9 +79,16 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+        <!-- Required for tab-api dependency -->
         <repository>
             <id>krypton</id>
             <url>https://repo.kryptonmc.org/releases</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
         </repository>
     </repositories>
 

@@ -3,6 +3,8 @@ package fun.milkyway.milkywgflags;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.flags.Flags;
+
+import io.papermc.paper.entity.TeleportFlag;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
@@ -106,16 +108,7 @@ public class RideFlagListener implements Listener {
 
         event.setCancelled(true);
 
-        if (!canRide(player, event.getTo())) {
-            player.sendMessage(MiniMessage.miniMessage().deserialize("<gold>Вы не можете телепортироваться со своим транспортом: в точке прибытия отключен флаг ride."));
-            return;
-        }
-
-        MilkyWGFlags.getInstance().getServer().getScheduler().runTaskLater(MilkyWGFlags.getInstance(), () -> {
-            vehicle.teleportAsync(event.getTo()).thenRun(() -> {
-                vehicle.addPassenger(player);
-            });
-        }, 1);
+        vehicle.teleportAsync(event.getTo(), PlayerTeleportEvent.TeleportCause.UNKNOWN);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
