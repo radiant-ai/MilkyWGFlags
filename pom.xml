@@ -90,6 +90,10 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -109,6 +113,12 @@
             <groupId>me.neznamy</groupId>
             <artifactId>tab-api</artifactId>
             <version>4.0.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.Zrips</groupId>
+            <artifactId>CMI-API</artifactId>
+            <version>9.7.14.3</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

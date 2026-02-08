@@ -4,8 +4,9 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.flags.Flags;
 
-import io.papermc.paper.entity.TeleportFlag;
+import com.Zrips.CMI.Containers.CMIUser;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.HappyGhast;
@@ -29,43 +30,35 @@ public class RideFlagListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onMount(EntityMountEvent event) {
-        if (!event.isCancelled()) {
-            return;
-        }
         if (!(event.getEntity() instanceof Player player)) {
             return;
         }
+
+        var vehicle = event.getMount();
+        var currentPassengers = vehicle.getPassengers();
+        var playerUuid = player.getUniqueId().toString();
+        var owners = getVehicleOwners(vehicle);
+
+        // Transfer ownership when becoming the primary rider (mounting an empty vehicle)
+        if (!event.isCancelled()) {
+            if (currentPassengers.isEmpty()) {
+                setVehicleOwners(vehicle, Set.of(playerUuid));
+            }
+            return;
+        }
+
         if (canRide(player, event.getEntity().getLocation())) {
             return;
         }
-        
-        var vehicle = event.getMount();
-        var currentPassengers = vehicle.getPassengers();
-        var owners = getVehicleOwners(vehicle);
-        var playerUuid = player.getUniqueId().toString();
-        
-        if (currentPassengers.isEmpty()) {
-            if (!owners.isEmpty() && !owners.contains(playerUuid)) {
-                setVehicleOwners(vehicle, Set.of(playerUuid));
-                event.setCancelled(false);
-                return;
-            }
-            if (owners.contains(playerUuid)) {
-                event.setCancelled(false);
-                return;
-            }
+
+        // Allow joining as 2nd passenger without granting ownership
+        if (!currentPassengers.isEmpty()) {
+            event.setCancelled(false);
             return;
         }
-        
-        var updatedOwners = new HashSet<>(owners);
-        updatedOwners.add(playerUuid);
-        currentPassengers.stream()
-            .filter(p -> p instanceof Player)
-            .map(p -> ((Player) p).getUniqueId().toString())
-            .forEach(updatedOwners::add);
-        setVehicleOwners(vehicle, updatedOwners);
-        
-        if (updatedOwners.contains(playerUuid)) {
+
+        // Empty vehicle: only existing owners may remount
+        if (owners.contains(playerUuid)) {
             event.setCancelled(false);
         }
     }
@@ -75,20 +68,17 @@ public class RideFlagListener implements Listener {
         if (!(event.getExited() instanceof Player player)) {
             return;
         }
-        
+
         var vehicle = event.getVehicle();
-        var remainingPassengers = vehicle.getPassengers().stream()
-            .filter(p -> p != player && p instanceof Player)
-            .map(p -> ((Player) p).getUniqueId().toString())
-            .collect(Collectors.toSet());
-        remainingPassengers.add(player.getUniqueId().toString());
-        
-        setVehicleOwners(vehicle, remainingPassengers);
-        
-        if (!event.isCancelled() && canRide(player, vehicle.getLocation())) {
+        var canRide = canRide(player, vehicle.getLocation());
+
+        if (!event.isCancelled() && canRide) {
             return;
         }
-        player.sendMessage(MiniMessage.miniMessage().deserialize("<gold>Вы покинули свой транспорт в привате с отключенным флагом ride. Только вы сможете сесть обратно!"));
+
+        if (!canRide) {
+            player.sendMessage(MiniMessage.miniMessage().deserialize("<gold>Вы покинули свой транспорт в привате с отключенным флагом ride. Только вы сможете сесть обратно!"));
+        }
         event.setCancelled(false);
     }
 
@@ -108,7 +98,34 @@ public class RideFlagListener implements Listener {
 
         event.setCancelled(true);
 
-        vehicle.teleportAsync(event.getTo(), PlayerTeleportEvent.TeleportCause.UNKNOWN);
+        if (vehicle.getPassengers().size() > 1) {
+            player.sendMessage(MiniMessage.miniMessage().deserialize("<gold>Вы не можете телепортироваться с другими пассажирами в транспорте!"));
+            return;
+        }
+
+        var from = event.getFrom();
+        vehicle.teleportAsync(event.getTo(), PlayerTeleportEvent.TeleportCause.UNKNOWN)
+            .thenAccept(success -> {
+                if (success) {
+                    updateBackLocation(player, from);
+                }
+            });
+    }
+
+    private void updateBackLocation(Player player, Location from) {
+        if (Bukkit.getPluginManager().getPlugin("CMI") == null) {
+            return;
+        }
+        setCMIBackLocation(player, from);
+    }
+
+    // Isolated to avoid class loading CMIUser when CMI is absent
+    private void setCMIBackLocation(Player player, Location from) {
+        var user = CMIUser.getUser(player);
+        if (user == null) {
+            return;
+        }
+        user.setLastTeleportLocation(from);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

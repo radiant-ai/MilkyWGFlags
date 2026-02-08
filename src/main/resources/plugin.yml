@@ -4,5 +4,6 @@ main: fun.milkyway.milkywgflags.MilkyWGFlags
 api-version: 1.18
 softdepend:
   - TAB
+  - CMI
 depend:
   - WorldGuard
